@@ -1,24 +1,21 @@
 package org.atgas.store.neo4j;
 
+import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import org.atgas.store.BuiltIns;
+import java.util.concurrent.Callable;
+import org.atgas.store.Change;
+import org.atgas.store.JSONCollector;
 import org.atgas.store.Store;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 
 public class StoreFactory {
     private static final String DB_PATH = "repository/neo4j";
     private static final Map<String, String> OPTIONS = Collections.singletonMap("allow_store_upgrade","true");
-    String greeting;
-    GraphDatabaseService graphDb;
-    Node firstNode;
-    Node secondNode;
-    Relationship relationship;
-
+    private static final InputStream BUILT_INS = StoreFactory.class.getResourceAsStream("/org/atgas/store/standardThings.json");
+   
+    
     private static void registerShutdownHook( final GraphDatabaseService graphDb )
     {
         // Registers a shutdown hook for the Neo4j instance so that it
@@ -34,12 +31,18 @@ public class StoreFactory {
         } );
     }
 
-    public Store create() {
-        EmbeddedGraphDatabase database = new EmbeddedGraphDatabase( DB_PATH, OPTIONS);
+    public static Store create() throws Exception {
+       return create(DB_PATH, OPTIONS, new JSONCollector(BUILT_INS));
+    }
+    
+    public static Store create(String path, Map<String, String> options, Callable<Change> baselineCollector) throws Exception {
+        EmbeddedGraphDatabase database = new EmbeddedGraphDatabase( path, options);
         registerShutdownHook( database );
 
         StoreImplementation retval = new StoreImplementation(database);
-        retval.addThings(BuiltIns.getBuiltInThings());
+        final Change baseline = baselineCollector.call();
+        retval.addThings(baseline.getAdds());
+        retval.removeThings(baseline.getRemoves());
         return retval;
     }
 }
