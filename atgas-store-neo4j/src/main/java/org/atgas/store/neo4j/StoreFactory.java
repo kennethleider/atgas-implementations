@@ -11,9 +11,9 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 
 public class StoreFactory {
-    private static final String DB_PATH = "repository/neo4j";
-    private static final Map<String, String> OPTIONS = Collections.singletonMap("allow_store_upgrade","true");
-    private static final InputStream BUILT_INS = StoreFactory.class.getResourceAsStream("/org/atgas/store/standardThings.json");
+    public static final String DB_PATH = "repository/neo4j";
+    public static final Map<String, String> OPTIONS = Collections.singletonMap("allow_store_upgrade","true");
+    public static final InputStream BUILT_INS = StoreFactory.class.getResourceAsStream("/org/atgas/store/standardThings.json");
    
     
     private static void registerShutdownHook( final GraphDatabaseService graphDb )
@@ -40,9 +40,12 @@ public class StoreFactory {
         registerShutdownHook( database );
 
         StoreImplementation retval = new StoreImplementation(database);
-        final Change baseline = baselineCollector.call();
-        retval.addThings(baseline.getAdds());
-        retval.removeThings(baseline.getRemoves());
+        
+        if (baselineCollector != null) {
+            final Change baseline = baselineCollector.call();
+            retval.addThings(baseline.getAdds());
+            retval.removeThings(baseline.getRemoves());
+        }
         return retval;
     }
 }

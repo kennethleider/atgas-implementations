@@ -14,7 +14,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.index.Index;
 
-class StoreImplementation implements Store {
+public class StoreImplementation implements Store {
 
     private final GraphDatabaseService database;
 
@@ -148,5 +148,10 @@ class StoreImplementation implements Store {
     @Override
     protected void finalize() throws Throwable {
         close();
+    }
+    
+    
+    public GraphDatabaseService getDatabase() {
+        return database;
     }
 }
